@@ -14,10 +14,17 @@ class ViewController: UIViewController {
     // MARK: - Properties
     @IBOutlet fileprivate weak var chartView: LineChartView!
     
+    var pinchGestor: UIPinchGestureRecognizer! {
+        didSet {
+            pinchGestor.addTarget(self, action: #selector(hasPinch))
+        }
+    }
+    
     // MARK: - View LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        pinchGestor = UIPinchGestureRecognizer()
         setupChartView()
     }
     
@@ -29,17 +36,21 @@ class ViewController: UIViewController {
         chartView.dragEnabled = true
         chartView.setScaleEnabled(false)
         chartView.drawGridBackgroundEnabled = false
-        chartView.pinchZoomEnabled = false
+        chartView.pinchZoomEnabled = true
         chartView.drawMarkers = false
+        chartView.legend.enabled = false
+        chartView.rightAxis.enabled = false
+        chartView.leftAxis.enabled = false
+        chartView.setExtraOffsets(left: 30, top: 0, right: 30, bottom: 0)
         chartView.backgroundColor = .white
+        chartView.addGestureRecognizer(pinchGestor)
         
-        let legend = chartView.legend
-        legend.form = .line
-        legend.textColor = .darkGray
-        legend.horizontalAlignment = .left
-        legend.verticalAlignment = .bottom
-        legend.orientation = .horizontal
-        legend.drawInside = false
+        let xAxis = chartView.xAxis
+        xAxis.labelPosition = .bottom
+        xAxis.labelTextColor = .purple
+        xAxis.drawLabelsEnabled = true
+        xAxis.drawGridLinesEnabled = false
+        xAxis.drawAxisLineEnabled = false
         
         updateChartData()
         
@@ -66,9 +77,8 @@ class ViewController: UIViewController {
             firstSet?.setCircleColor(.black)
             firstSet?.lineWidth = 2
             firstSet?.circleRadius = 3
-            firstSet?.fillAlpha = 65/255.0
             firstSet?.fillColor = .purple
-            firstSet?.highlightColor = .black
+            firstSet?.highlightColor = #colorLiteral(red: 0, green: 0.5843137255, blue: 0.3254901961, alpha: 1)
             firstSet?.drawCircleHoleEnabled = false
             
             var dataSets = [LineChartDataSet]()
@@ -77,8 +87,8 @@ class ViewController: UIViewController {
             dataSets.append(firstSet)
             
             let data = LineChartData(dataSets: dataSets)
-            data.setValueTextColor(.purple)
-            data.setValueFont(.systemFont(ofSize: 10))
+            data.setValueTextColor(.black)
+            data.setValueFont(.boldSystemFont(ofSize: 10))
             
             chartView.data = data
             
@@ -91,9 +101,34 @@ class ViewController: UIViewController {
         chartView.data?.notifyDataChanged()
         chartView.notifyDataSetChanged()
     }
+    
+    dynamic fileprivate func hasPinch() {
+        print("has been pinch")
+    }
 }
 
 // MARK: - ChartView Delegate
 extension ViewController: ChartViewDelegate {
 
+    func chartValueNothingSelected(_ chartView: ChartViewBase) {
+        print("No data selected")
+    }
+    
+    func chartTranslated(_ chartView: ChartViewBase, dX: CGFloat, dY: CGFloat) {
+        print("Translated")
+        print("dx: \(dX)")
+        print("dy: \(dY)")
+    }
+    
+    func chartScaled(_ chartView: ChartViewBase, scaleX: CGFloat, scaleY: CGFloat) {
+        print("Scaled")
+        print("scale x: \(scaleX)")
+        print("scale y: \(scaleY)")
+    }
+    
+    func chartValueSelected(_ chartView: ChartViewBase, entry: ChartDataEntry, highlight: Highlight) {
+        print("Selected")
+        print("Entry x: \(entry.x)")
+        print("Entry y: \(entry.y)")
+    }
 }
