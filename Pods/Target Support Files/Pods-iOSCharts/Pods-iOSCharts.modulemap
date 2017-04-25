@@ -1,0 +1,6 @@
+framework module Pods_iOSCharts {
+  umbrella header "Pods-iOSCharts-umbrella.h"
+
+  export *
+  module * { export * }
+}
