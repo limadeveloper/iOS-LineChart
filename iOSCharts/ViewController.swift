@@ -14,17 +14,18 @@ class ViewController: UIViewController {
     // MARK: - Properties
     @IBOutlet fileprivate weak var chartView: LineChartView!
     
-    var pinchGestor: UIPinchGestureRecognizer! {
-        didSet {
-            pinchGestor.addTarget(self, action: #selector(hasPinch))
-        }
-    }
+    fileprivate var pinchGestor = UIPinchGestureRecognizer()
+    fileprivate var panGestor = UIPanGestureRecognizer()
     
     // MARK: - View LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        pinchGestor = UIPinchGestureRecognizer()
+        pinchGestor.addTarget(self, action: #selector(hasPinch(gestor:)))
+        
+        panGestor.maximumNumberOfTouches = 2
+        panGestor.addTarget(self, action: #selector(hasPan(gestor:)))
+        
         setupChartView()
     }
     
@@ -36,21 +37,24 @@ class ViewController: UIViewController {
         chartView.dragEnabled = true
         chartView.setScaleEnabled(false)
         chartView.drawGridBackgroundEnabled = false
-        chartView.pinchZoomEnabled = true
+        chartView.pinchZoomEnabled = false
         chartView.drawMarkers = false
-        chartView.legend.enabled = false
+        chartView.legend.enabled = true
         chartView.rightAxis.enabled = false
         chartView.leftAxis.enabled = false
+        chartView.highlightPerDragEnabled = true
         chartView.setExtraOffsets(left: 30, top: 0, right: 30, bottom: 0)
-        chartView.backgroundColor = .white
-        chartView.addGestureRecognizer(pinchGestor)
+        chartView.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
+        //chartView.addGestureRecognizer(pinchGestor)
+        //chartView.addGestureRecognizer(panGestor)
         
         let xAxis = chartView.xAxis
         xAxis.labelPosition = .bottom
-        xAxis.labelTextColor = .purple
+        xAxis.labelTextColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1)
         xAxis.drawLabelsEnabled = true
         xAxis.drawGridLinesEnabled = false
-        xAxis.drawAxisLineEnabled = false
+        xAxis.gridLineDashLengths = [10, 10]
+        xAxis.gridLineDashPhase = 0
         
         updateChartData()
         
@@ -60,6 +64,7 @@ class ViewController: UIViewController {
     fileprivate func updateChartData() {
         
         var firstLineValues = [ChartDataEntry]()
+        var secondLineValues = [ChartDataEntry]()
         
         for i in 0 ..< 20 {
             let value = arc4random_uniform(30)+50
@@ -67,27 +72,32 @@ class ViewController: UIViewController {
             firstLineValues.append(item)
         }
         
+        for i in 0 ..< 100 {
+            let value = arc4random_uniform(120)+50
+            let item = ChartDataEntry(x: Double(i), y: Double(value))
+            secondLineValues.append(item)
+        }
+        
         var firstSet: LineChartDataSet?
+        var secondSet: LineChartDataSet?
         
         guard (chartView.data?.dataSetCount ?? 0) > 0 else {
             
-            firstSet = LineChartDataSet(values: firstLineValues, label: "First DataSet")
-            firstSet?.axisDependency = .left
-            firstSet?.setColor(.purple)
-            firstSet?.setCircleColor(.black)
-            firstSet?.lineWidth = 2
-            firstSet?.circleRadius = 3
-            firstSet?.fillColor = .purple
-            firstSet?.highlightColor = #colorLiteral(red: 0, green: 0.5843137255, blue: 0.3254901961, alpha: 1)
-            firstSet?.drawCircleHoleEnabled = false
-            
             var dataSets = [LineChartDataSet]()
             
-            guard let firstSet = firstSet else { return }
-            dataSets.append(firstSet)
+            firstSet = setupNew(lineChartDataSet: firstSet, values: firstLineValues, label: "First")
+            secondSet = setupNew(lineChartDataSet: secondSet, values: secondLineValues, label: "Second", color: #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1), circleColor: #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1), fill: Fill.fillWithColor(#colorLiteral(red: 0.9764705896, green: 0.850980401, blue: 0.5490196347, alpha: 1)))
             
+            if let firstSet = firstSet {
+                dataSets.append(firstSet)
+            }
+            if let secondSet = secondSet {
+                dataSets.append(secondSet)
+            }
+            
+            guard dataSets.count > 0 else { return }
             let data = LineChartData(dataSets: dataSets)
-            data.setValueTextColor(.black)
+            data.setValueTextColor(#colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1))
             data.setValueFont(.boldSystemFont(ofSize: 10))
             
             chartView.data = data
@@ -98,12 +108,45 @@ class ViewController: UIViewController {
         firstSet = chartView.data?.dataSets.first as? LineChartDataSet
         firstSet?.values = firstLineValues
         
+        secondSet = chartView.data?.dataSets.last as? LineChartDataSet
+        secondSet?.values = secondLineValues
+        
         chartView.data?.notifyDataChanged()
         chartView.notifyDataSetChanged()
     }
     
-    dynamic fileprivate func hasPinch() {
-        print("has been pinch")
+    fileprivate func setupNew(lineChartDataSet: LineChartDataSet?, values: [ChartDataEntry], label: String, drawCirclesEnabled: Bool = true, axisDependency: YAxis.AxisDependency = .left, color: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), circleColor: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), lineWidth: CGFloat = 2, circleRadius: CGFloat = 3, fillColor: UIColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1), highlightColor: UIColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1), drawCircleHoleEnabled: Bool = false, lineDashLengths: [CGFloat] = [5, 2.5], highlightLineDashLengths: [CGFloat] = [5, 2.5], formLineDashLengths: [CGFloat] = [5, 2.5], formLineWidth: CGFloat = 2, formSize: CGFloat = 15, fillAlpha: CGFloat = 0, fill: Fill = Fill.fillWithColor(#colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)), drawFilledEnabled: Bool = true) -> LineChartDataSet? {
+        
+        var set = lineChartDataSet
+        
+        set = LineChartDataSet(values: values, label: label)
+        set?.drawCirclesEnabled = drawCirclesEnabled
+        set?.axisDependency = axisDependency
+        set?.setColor(color)
+        set?.setCircleColor(circleColor)
+        set?.lineWidth = lineWidth
+        set?.circleRadius = circleRadius
+        set?.fillColor = fillColor
+        set?.highlightColor = highlightColor
+        set?.drawCircleHoleEnabled = drawCircleHoleEnabled
+        set?.lineDashLengths = lineDashLengths
+        set?.highlightLineDashLengths = highlightLineDashLengths
+        set?.formLineDashLengths = formLineDashLengths
+        set?.formLineWidth = formLineWidth
+        set?.formSize = formSize
+        set?.fillAlpha = fillAlpha
+        //set?.fill = fill
+        set?.drawFilledEnabled = drawFilledEnabled
+        
+        return set
+    }
+    
+    dynamic fileprivate func hasPinch(gestor: UIPinchGestureRecognizer) {
+        print("pinch: \(gestor.scale)")
+    }
+    
+    dynamic fileprivate func hasPan(gestor: UIPanGestureRecognizer) {
+        print("pan: \(gestor.location(in: chartView))")
     }
 }
 
@@ -116,19 +159,13 @@ extension ViewController: ChartViewDelegate {
     
     func chartTranslated(_ chartView: ChartViewBase, dX: CGFloat, dY: CGFloat) {
         print("Translated")
-        print("dx: \(dX)")
-        print("dy: \(dY)")
     }
     
     func chartScaled(_ chartView: ChartViewBase, scaleX: CGFloat, scaleY: CGFloat) {
         print("Scaled")
-        print("scale x: \(scaleX)")
-        print("scale y: \(scaleY)")
     }
     
     func chartValueSelected(_ chartView: ChartViewBase, entry: ChartDataEntry, highlight: Highlight) {
-        print("Selected")
-        print("Entry x: \(entry.x)")
-        print("Entry y: \(entry.y)")
+        print("Selected: \(entry.y)")
     }
 }

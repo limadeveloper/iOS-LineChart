@@ -147,7 +147,6 @@
 				TargetAttributes = {
 					4E8C89C91EAD815200BDA2BC = {
 						CreatedOnToolsVersion = 8.3.2;
-						DevelopmentTeam = G9572JBENB;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -363,7 +362,7 @@
 			baseConfigurationReference = 069025A7AE02CA9E826E6BD7 /* Pods-iOSCharts.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = G9572JBENB;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = iOSCharts/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.limadeveloper.tests.ioscharts;
@@ -377,7 +376,7 @@
 			baseConfigurationReference = 2EDDBA128C968AAB3CF1C588 /* Pods-iOSCharts.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = G9572JBENB;
+				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = iOSCharts/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.limadeveloper.tests.ioscharts;
