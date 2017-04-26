@@ -35,7 +35,7 @@ class ViewController: UIViewController {
         chartView.delegate = self
         chartView.chartDescription?.enabled = false
         chartView.dragEnabled = true
-        chartView.setScaleEnabled(false)
+        chartView.setScaleEnabled(true)
         chartView.drawGridBackgroundEnabled = false
         chartView.pinchZoomEnabled = false
         chartView.drawMarkers = false
@@ -72,8 +72,8 @@ class ViewController: UIViewController {
             firstLineValues.append(item)
         }
         
-        for i in 0 ..< 100 {
-            let value = arc4random_uniform(120)+50
+        for i in 0 ..< 50 {
+            let value = arc4random_uniform(60)+50
             let item = ChartDataEntry(x: Double(i), y: Double(value))
             secondLineValues.append(item)
         }
@@ -86,18 +86,14 @@ class ViewController: UIViewController {
             var dataSets = [LineChartDataSet]()
             
             firstSet = setupNew(lineChartDataSet: firstSet, values: firstLineValues, label: "First")
-            secondSet = setupNew(lineChartDataSet: secondSet, values: secondLineValues, label: "Second", color: #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1), circleColor: #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1), fill: Fill.fillWithColor(#colorLiteral(red: 0.9764705896, green: 0.850980401, blue: 0.5490196347, alpha: 1)))
+            secondSet = setupNew(lineChartDataSet: secondSet, values: secondLineValues, label: "Second", color: #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1), circleColor: #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1), fill: Fill.fillWithColor(#colorLiteral(red: 0.9764705896, green: 0.850980401, blue: 0.5490196347, alpha: 1)), valueTextColor: #colorLiteral(red: 0.9686274529, green: 0.78039217, blue: 0.3450980484, alpha: 1))
             
             if let firstSet = firstSet {
                 dataSets.append(firstSet)
             }
-            if let secondSet = secondSet {
-                dataSets.append(secondSet)
-            }
             
             guard dataSets.count > 0 else { return }
             let data = LineChartData(dataSets: dataSets)
-            data.setValueTextColor(#colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1))
             data.setValueFont(.boldSystemFont(ofSize: 10))
             
             chartView.data = data
@@ -115,7 +111,7 @@ class ViewController: UIViewController {
         chartView.notifyDataSetChanged()
     }
     
-    fileprivate func setupNew(lineChartDataSet: LineChartDataSet?, values: [ChartDataEntry], label: String, drawCirclesEnabled: Bool = true, axisDependency: YAxis.AxisDependency = .left, color: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), circleColor: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), lineWidth: CGFloat = 2, circleRadius: CGFloat = 3, fillColor: UIColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1), highlightColor: UIColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1), drawCircleHoleEnabled: Bool = false, lineDashLengths: [CGFloat] = [5, 2.5], highlightLineDashLengths: [CGFloat] = [5, 2.5], formLineDashLengths: [CGFloat] = [5, 2.5], formLineWidth: CGFloat = 2, formSize: CGFloat = 15, fillAlpha: CGFloat = 0, fill: Fill = Fill.fillWithColor(#colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)), drawFilledEnabled: Bool = true) -> LineChartDataSet? {
+    fileprivate func setupNew(lineChartDataSet: LineChartDataSet?, values: [ChartDataEntry], label: String, drawCirclesEnabled: Bool = true, axisDependency: YAxis.AxisDependency = .left, color: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), circleColor: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), lineWidth: CGFloat = 2, circleRadius: CGFloat = 3, fillColor: UIColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1), highlightColor: UIColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1), drawCircleHoleEnabled: Bool = false, lineDashLengths: [CGFloat] = [5, 2.5], highlightLineDashLengths: [CGFloat] = [5, 2.5], formLineDashLengths: [CGFloat] = [5, 2.5], formLineWidth: CGFloat = 2, formSize: CGFloat = 15, fillAlpha: CGFloat = 1, fill: Fill = Fill.fillWithColor(#colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)), drawFilledEnabled: Bool = true, valueTextColor: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1)) -> LineChartDataSet? {
         
         var set = lineChartDataSet
         
@@ -135,8 +131,9 @@ class ViewController: UIViewController {
         set?.formLineWidth = formLineWidth
         set?.formSize = formSize
         set?.fillAlpha = fillAlpha
-        //set?.fill = fill
+        set?.fill = fill
         set?.drawFilledEnabled = drawFilledEnabled
+        set?.valueTextColor = valueTextColor
         
         return set
     }
