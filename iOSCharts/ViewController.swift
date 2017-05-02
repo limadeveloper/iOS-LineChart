@@ -176,6 +176,9 @@ class ViewController: UIViewController {
                 )
                 
                 lineDataSet?.fillAlpha = 1
+                
+                let data = LineChartData(dataSets: [lineDataSet!])
+                self?.chartView.data = data
             }
             
         case .ended:
