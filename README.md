@@ -11,7 +11,7 @@
 
 ### Images
 <p align="center">
-<img src="https://github.com/limadeveloper/iOS-LineChart/blob/master/Docs/images/01.png" width="300">
-<img src="https://github.com/limadeveloper/iOS-LineChart/blob/master/Docs/images/02.png" width="300">
+<img src="https://github.com/limadeveloper/iOS-LineChart/blob/master/Docs/images/01.png" width="400">
+<img src="https://github.com/limadeveloper/iOS-LineChart/blob/master/Docs/images/02.png" width="400">
 </p>
 <br>
