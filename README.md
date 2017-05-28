@@ -10,8 +10,12 @@
 - Swift 3.1
 
 ### Images
-<p align="center">
-<img src="https://github.com/limadeveloper/iOS-LineChart/blob/master/Docs/images/01.png" width="400">
-<img src="https://github.com/limadeveloper/iOS-LineChart/blob/master/Docs/images/02.png" width="400">
+<p align="left">
+<img src="https://github.com/limadeveloper/iOS-LineChart/blob/master/Docs/images/01.png" width="520">
+</p>
+<br>
+
+<p align="left">
+<img src="https://github.com/limadeveloper/iOS-LineChart/blob/master/Docs/images/02.png" width="520">
 </p>
 <br>
