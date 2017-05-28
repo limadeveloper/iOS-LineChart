@@ -15,13 +15,18 @@ class ViewController: UIViewController {
     @IBOutlet fileprivate weak var chartView: LineChartView!
     
     fileprivate let longGesture = UILongPressGestureRecognizer()
+    fileprivate let pinchGesture = UIPinchGestureRecognizer()
     fileprivate var selectedEntriesWhenGesture: [ChartDataEntry]?
     
     // MARK: - View LifeCycle
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        longGesture.addTarget(self, action: #selector(hasLongPressInChart(gesture:)))
+        pinchGesture.addTarget(self, action: #selector(pinchInChart(gesture:)))
+        
+        longGesture.numberOfTouchesRequired = 1
+        longGesture.minimumPressDuration = 0.2
+        longGesture.addTarget(self, action: #selector(longPressInChart(gesture:)))
         
         setupChartView()
     }
@@ -39,10 +44,12 @@ class ViewController: UIViewController {
         chartView.legend.enabled = true
         chartView.rightAxis.enabled = false
         chartView.leftAxis.enabled = false
-        chartView.highlightPerDragEnabled = true
+        chartView?.highlightPerTapEnabled = false
+        chartView?.highlightPerDragEnabled = false
         chartView.setExtraOffsets(left: 30, top: 0, right: 30, bottom: 0)
         chartView.backgroundColor = #colorLiteral(red: 1, green: 1, blue: 1, alpha: 1)
         chartView.addGestureRecognizer(longGesture)
+        chartView.addGestureRecognizer(pinchGesture)
         
         let xAxis = chartView.xAxis
         xAxis.labelPosition = .bottom
@@ -108,7 +115,7 @@ class ViewController: UIViewController {
         chartView.notifyDataSetChanged()
     }
     
-    fileprivate func setupNew(lineChartDataSet: LineChartDataSet?, values: [ChartDataEntry], label: String, drawCirclesEnabled: Bool = true, axisDependency: YAxis.AxisDependency = .left, color: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), circleColor: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), lineWidth: CGFloat = 2, circleRadius: CGFloat = 3, fillColor: UIColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1), highlightColor: UIColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1), drawCircleHoleEnabled: Bool = false, lineDashLengths: [CGFloat] = [5, 2.5], highlightLineDashLengths: [CGFloat] = [5, 2.5], formLineDashLengths: [CGFloat] = [5, 2.5], formLineWidth: CGFloat = 2, formSize: CGFloat = 15, fillAlpha: CGFloat = 0, fill: Fill = Fill.fillWithColor(#colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)), drawFilledEnabled: Bool = true, valueTextColor: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1)) -> LineChartDataSet? {
+    fileprivate func setupNew(lineChartDataSet: LineChartDataSet?, values: [ChartDataEntry], label: String, drawCirclesEnabled: Bool = true, axisDependency: YAxis.AxisDependency = .left, color: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), circleColor: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), lineWidth: CGFloat = 2, circleRadius: CGFloat = 3, fillColor: UIColor = #colorLiteral(red: 0.5791940689, green: 0.1280144453, blue: 0.5726861358, alpha: 1), highlightColor: UIColor = #colorLiteral(red: 0.5803921569, green: 0.1294117647, blue: 0.5725490196, alpha: 1), drawCircleHoleEnabled: Bool = false, lineDashLengths: [CGFloat] = [5, 2.5], highlightLineDashLengths: [CGFloat] = [5, 2.5], formLineDashLengths: [CGFloat] = [5, 2.5], formLineWidth: CGFloat = 2, formSize: CGFloat = 15, fillAlpha: CGFloat = 0, fill: Fill = Fill(color: #colorLiteral(red: 0.721568644, green: 0.8862745166, blue: 0.5921568871, alpha: 1)), drawFilledEnabled: Bool = true, valueTextColor: UIColor = #colorLiteral(red: 0.1091378406, green: 0.6490935683, blue: 0.423900485, alpha: 1), drawHorizontalHighlightIndicatorEnabled: Bool = false, highlightLineWidth: CGFloat = 3) -> LineChartDataSet? {
         
         var set = lineChartDataSet
         
@@ -121,6 +128,7 @@ class ViewController: UIViewController {
         set?.circleRadius = circleRadius
         set?.fillColor = fillColor
         set?.highlightColor = highlightColor
+        set?.highlightLineWidth = highlightLineWidth
         set?.drawCircleHoleEnabled = drawCircleHoleEnabled
         set?.lineDashLengths = lineDashLengths
         set?.highlightLineDashLengths = highlightLineDashLengths
@@ -131,60 +139,120 @@ class ViewController: UIViewController {
         set?.fill = fill
         set?.drawFilledEnabled = drawFilledEnabled
         set?.valueTextColor = valueTextColor
-        set?.drawHorizontalHighlightIndicatorEnabled = false
+        set?.drawHorizontalHighlightIndicatorEnabled = drawHorizontalHighlightIndicatorEnabled
+        
+        let gradientColors = [
+            ChartColorTemplates.colorFromString("#D1D613").cgColor,
+            ChartColorTemplates.colorFromString("#1E9859").cgColor
+        ]
+        
+        if let gradient = CGGradient(colorsSpace: nil, colors: gradientColors as CFArray, locations: nil) {
+            set?.fill = Fill.fillWithLinearGradient(gradient, angle: 90)
+        }
         
         return set
     }
     
-    dynamic fileprivate func hasLongPressInChart(gesture: UILongPressGestureRecognizer) {
+    fileprivate func getDataFromChartToGesture() -> (values: [LineChartDataSet?]?, label: String?, lineData: LineChartData?, defaultSet: ChartDataSet?) {
+        return (
+            (chartView?.data?.dataSets as? [LineChartDataSet]),
+            chartView?.data?.dataSets.first?.label,
+            chartView?.lineData,
+            chartView?.lineData?.dataSets.first as? ChartDataSet
+        )
+    }
+    
+    fileprivate func highlightInChart(when gesture: UIGestureRecognizer, and selectedEntries: [ChartDataEntry]? = nil) {
         
-        let entry = chartView.getEntryByTouchPoint(point: gesture.location(in: chartView))
-        var label = chartView?.data?.dataSets.first?.label
+        guard let h1 = self.chartView?.getHighlightByTouchPoint(gesture.location(ofTouch: 0, in: self.chartView)) else { return }
+        
+        var values = [h1]
+        
+        if gesture.numberOfTouches == 2, let h2 = self.chartView?.getHighlightByTouchPoint(gesture.location(ofTouch: 1, in: self.chartView)) {
+            values = [h1, h2]
+        }
+        
+        chartView?.highlightValues(values)
+    }
+    
+    fileprivate func getCenterIn(pinchGesture: UIPinchGestureRecognizer?) -> CGPoint {
+        return pinchGesture?.location(in: chartView) ?? .zero
+    }
+    
+    dynamic fileprivate func longPressInChart(gesture: UILongPressGestureRecognizer) {
+        
+        chartView?.highlightPerTapEnabled = true
+        chartView?.highlightPerDragEnabled = true
+        
+        switch gesture.state {
+        case .began, .changed:
+            highlightInChart(when: gesture)
+        case .ended:
+            chartView?.highlightValues(nil)
+            chartView?.highlightPerTapEnabled = false
+            chartView?.highlightPerDragEnabled = false
+        default:
+            break
+        }
+    }
+    
+    dynamic private func pinchInChart(gesture: UIPinchGestureRecognizer) {
+    
+        let dataGesture = getDataFromChartToGesture()
+        var lineData = dataGesture.lineData
+        
+        chartView?.delegate = nil
         
         switch gesture.state {
         case .changed:
             
-            guard let entry = entry else { break }
+            guard gesture.numberOfTouches == 2 else { return }
+            
+            guard let allValues = dataGesture.defaultSet?.values else { break }
+            guard let entryA = chartView?.getEntryByTouchPoint(point: gesture.location(ofTouch: 0, in: chartView)) else { break }
+            guard let entryB = chartView?.getEntryByTouchPoint(point: gesture.location(ofTouch: 1, in: chartView)) else { break }
+            
+            if self.selectedEntriesWhenGesture == nil { self.selectedEntriesWhenGesture = [ChartDataEntry]() }
+            
+            self.selectedEntriesWhenGesture = allValues.filter({ $0.x >= entryA.x && $0.x <= entryB.x })
+            
+            guard let selectedEntries = self.selectedEntriesWhenGesture, selectedEntries.count > 0 else { return }
+            
+            func filterEntries(entries: [ChartDataEntry]) -> [ChartDataEntry] { // removing duplicates
+                var set = Set<Double>()
+                let result = entries.filter({ entry -> Bool in
+                    guard !set.contains(entry.x) else { return false }
+                    set.insert(entry.x)
+                    return true
+                })
+                return result
+            }
+            
+            self.selectedEntriesWhenGesture = filterEntries(entries: selectedEntries)
+            
+            let fillSet = LineChartDataSet()
+            guard let newSet = setupNew(lineChartDataSet: fillSet, values: self.selectedEntriesWhenGesture ?? [], label: "", drawCirclesEnabled: false, fillAlpha: 1, valueTextColor: .clear) else { return }
+            
+            guard let defaultSet = dataGesture.defaultSet else { return }
+            lineData = LineChartData(dataSets: [defaultSet, newSet])
             
             DispatchQueue.main.async { [weak self] in
-                
-                if self?.selectedEntriesWhenGesture == nil { self?.selectedEntriesWhenGesture = [ChartDataEntry]() }
-                
-                self?.selectedEntriesWhenGesture?.append(entry)
-                
-                guard let selectedEntries = self?.selectedEntriesWhenGesture, selectedEntries.count > 0 else { return }
-                
-                func filterEntries(entries: [ChartDataEntry]) -> [ChartDataEntry] { // removing duplicates
-                    var set = Set<Double>()
-                    let result = entries.filter({ entry -> Bool in
-                        guard !set.contains(entry.x) else { return false }
-                        set.insert(entry.x)
-                        return true
-                    })
-                    return result
-                }
-                
-                self?.selectedEntriesWhenGesture = filterEntries(entries: selectedEntries)
-                
-                var lineDataSet: LineChartDataSet?
-                
-                lineDataSet = self?.setupNew(
-                    lineChartDataSet: lineDataSet,
-                    values: self?.selectedEntriesWhenGesture ?? [],
-                    label: label ?? "---",
-                    fillAlpha: 1
-                )
-                
-                lineDataSet?.fillAlpha = 1
-                
-                let data = LineChartData(dataSets: [lineDataSet!])
-                self?.chartView.data = data
+                self?.chartView?.data = lineData
+                self?.highlightInChart(when: gesture, and: self?.selectedEntriesWhenGesture)
+                guard let firstLegend = self?.chartView.legend.entries.first else { return }
+                self?.chartView.legend.entries = [firstLegend]
             }
             
         case .ended:
+            
+            guard let defaultSet = dataGesture.defaultSet else { return }
+            
+            chartView?.delegate = self
+            chartView?.data = LineChartData(dataSets: [defaultSet])
+            chartView?.highlightValues(nil)
+            
             selectedEntriesWhenGesture = nil
-            label = nil
-            updateChartData()
+            
         default:
             break
         }
